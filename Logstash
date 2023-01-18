@@ -5,4 +5,5 @@ nano docker-compose.yaml
 mkdir pipeline
 cd /pipeline/
 nano logstash.conf
-- 
+- Ejecutar sudo docker compose up
+
