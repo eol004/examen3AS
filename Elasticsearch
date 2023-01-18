@@ -196,3 +196,5 @@ curl -X GET "localhost:9200/bank/_search?pretty" -H 'Content-Type: application/j
   "query": {
     "regexp": {
       "employer": "a.{3,4}"}}}'
+
+https://soy-angela.notion.site/soy-angela/Administraci-n-de-Sistemas-90473a4f64b54a0fb010db6a7ceebf5e 
