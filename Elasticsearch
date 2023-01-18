@@ -1,0 +1,90 @@
+-- OPERACIONES CRUD --
+
+** Crear un indice **
+
+(SIN CONTRASEÑA)
+curl -H "Content-Type: application/json" -XPUT 127.0.0.1:9200/<NomIndice>
+
+** Cargar dataset **
+
+Si se necesita pasar de local a remoto, en local hacer: scp /home/estefania/Escritorio/<NomArchivo>.json estefania@34.76.205.238:/home/estefania/elasticsearch
+
+curl -H "Content-Type: application/json" -XPUT '127.0.0.1:9200/<NomINdice>/_bulk' --data-binary @<nombreArchivo>.json
+
+** Crear un indice con un mapping con campos: **
+
+(SIN CONTRASEÑA)
+curl -H "Content-Type: application/json" -XPUT http://127.0.0.1:9200/<nombreIndice> -d '
+{ "mappings": {
+"properties": {
+"<NombreCampo>": { "type": "text"},
+"author": {"type": "text"},
+"resumen": {"type": "text"}}}}'
+
+(CON CONTRASEÑA)
+curl --cacert http_ca.crt -u elastic:<CONTRASEÑA> -H "Content-Type: application/json" -XPUT https://127.0.0.1:9200/<nombreIndice> -d '
+{ "mappings": {
+"properties": {
+"<NombreCampo>": { "type": "text"},
+"author": {"type": "text"},
+"resumen": {"type": "text"}}}}'
+
+** Añadir campos **
+
+(CON CONTRASEÑA)
+curl --cacert http_ca.crt -u elastic:<CONTRASEÑA> -H "Content-Type: application/json" -XPUT https://127.0.0.1:9200/libros/_doc/<FILA> -d '
+{
+"<NombreCampo>": "Cuento de Navidad",
+"autor": "Charles Dickens",
+"resumen": "Una historia"
+}'
+
+(SIN CONTRASEÑA)
+curl -H "Content-Type: application/json" -XPUT http://127.0.0.1:9200/<nomIndice>/_doc/<FILA> -d '
+{
+"<NombreCampo>": "Mi libro",
+"autor": "Luna de pluton",
+"resumen": "Mi historia"
+}'
+
+** Editar datos **
+
+(CON CONTRASEÑA)
+curl --cacert http_ca.crt -u elastic:<CONTRASEÑA> -H "Content-Type: application/json" -XPOST https://127.0.0.1:9200/peliculas/_update/2 -d '
+{
+"doc":{
+"anyo": "2000"}
+}'
+
+(SIN CONTRASEÑA)
+curl -H "Content-Type: application/json" -XPOST '127.0.0.1:9200/<NOMINDICE>/_update/<NUMINDICE>' -d '
+{"doc": 
+{"<NomCampoAEditar": <dato>}
+}'
+
+** Borrar documento **
+
+(CON CONTRASEÑA)
+curl --cacert http_ca.crt -u elastic:<CONTRASEÑA> -H "Content-Type: application/json" -XDELETE https://127.0.0.1:9200/<NOMINDICE>/_doc/<NUMINDICE>
+
+(SIN CONTRASEÑA)
+curl -H "Content-Type: application/json" -XDELETE 127.0.0.1:9200/<NOMINDICE>/_doc/<NUMINDICE>
+
+** Busquedas **
+* A que ? pertenece una frase: *
+
+curl -H "Content-Type: application/json" -XGET '127.0.0.1:9200/<NomIndice>/_search?pretty' -d '
+{"query":
+{"match_phrase":{"text_entry": "<Frase a buscar>"}}
+}'
+
+* Cuantas frases tiene ...(speaker) en ...(play_name) *
+curl -H "Content-Type: application/json" -XGET 'localhost:9200/shakespeare/_count?pretty' -d '
+{"query": {
+"bool": {
+"filter": [{ "match_phrase": {
+"speaker": "OCTAVIUS CAESAR"}}],
+"must": [{
+"match_phrase": {
+"play_name": "Antony and Cleopatra"
+ }}]}}}'
