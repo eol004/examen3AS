@@ -1,0 +1,348 @@
+-- Power Point Tema 5.1 Elasticsearch --
+-- EJERCICIO 1 --
+
+-- (Ejecutar docker compose y comprobar que se este ejecutando con cliente REST) --
+
+$ docker compose up
+
+(En otra terminal)
+$ curl ... -XGET 104.199.70.131:9200
+
+-- EJERCICIO 2 --
+
+-- (Crear un índice “peliculas” con las siguientes) --
+características:
+• Campo “titulo”, tipo text.
+• Campo “director”, tipo text.
+• Campo “anyo”, tipo integer. 
+
+-- 2 MANERAS --
+
+$ curl -H "Content-Type: application/json" -XPUT '104.199.70.131:9200/peliculas' -d '{
+"mappings":{"properties": {"titulo": {"type": "text"},"director": {"type": "text"},"anyo": {"type":"integer"}}}}'
+
+
+
+-- (Cargar los siguientes datos al índice:) --
+{"create" : {"_index": "peliculas", "_id" : "1" } }
+{"id" : "1", "titulo" : "El padrino", "director" : "Francis Ford Coppola", "anyo": 1972}
+{"create" : {"_index": "peliculas", "_id" : "2" } }
+{"id" : "2", "titulo" : "Gladiator", "director" : "Ridley Scott", "anyo": 2030}
+{"create" : {"_index": "peliculas", "_id" : "3" } }
+{"id" : "3", "titulo" : "Inception", "director" : "Christopher Nolan", "anyo": 2010}
+
+
+--(UNO A UNO)--
+
+$ curl -H "Content-Type: application/json" -XPOST '104.199.70.131:9200/peliculas/_doc/1' -d '{"create": {"_index": "peliculas", "_id": 1}}'
+
+$ curl -H "Content-Type: application/json" -XPOST '104.199.70.131:9200/peliculas/_doc/1' -d '{"id":"1", "titulo": "El padrino", "director":"Francis Ford Coppola", "anyo": 1972}'
+
+$ curl -H "Content-Type: application/json" -XPOST '104.199.70.131:9200/peliculas/_doc/2' -d '{"create": {"_index": "peliculas", "_id": 2}}'
+
+$ curl -H "Content-Type: application/json" -XPOST '104.199.70.131:9200/peliculas/_doc/1' -d '{"id":"2", "titulo": "Gladiator", "director":"Ridley Scott", "anyo": 2030}'
+
+$ curl -H "Content-Type: application/json" -XPOST '104.199.70.131:9200/peliculas/_doc/3' -d '{"create": {"_index": "peliculas", "_id": 3}}'
+
+$ curl -H "Content-Type: application/json" -XPOST '104.199.70.131:9200/peliculas/_doc/1' -d '{"id":"3", "titulo": "Inception", "director":"Christopher Nolan", "anyo": 2010}'
+
+--(TODOS A LA VEZ)--
+(Se crea un archivo json)
+$ sudo vim pelis.json
+(Dentro del archivo)
+
+{"index":{"_id":"1"}}
+{"titulo":"El padrino", "director": "Francis Ford Coppola", "anyo": 1972}
+{"index":{"_id": "2"}}
+{"titulo":"Galdiator", "director":"Ridley Scott", "anyo": 2030}
+{"index":{"_id":"3"}}
+{"titulo":"Inception", "director": "Christopher Nolan", "anyo": 2010}
+
+$ curl -H "Content-type: application/json" -XPUT '104.199.70.131:9200/peliculas/_bulk' --data-binary @pelis.json
+
+-- (Modificar el campo “anyo” del documento correspondiente a la película “Gladiator” 2030 --> 2000) --
+
+$ curl -H "Content-Type: application/json" -XPOST '104.199.70.131:9200/peliculas/_update/2' -d '{"doc": {"anyo": 2000}}'
+
+-- (Eliminar el documento correpondiente a la pelicula Inception) --
+
+$ curl -H "Content-Type: application/json" -XDELETE 104.199.70:9200/peliculas/_doc/3
+
+
+-- EJERICIO 3 --
+
+-- (Crear un indice llamado "Shakespeare") --
+$ curl -H "Content-Type: application/json" -XPUT localhost:9200/shakespeare
+
+-- (Cargar el dataset de las obras de Shakespeare en el indice creado) --
+$ curl -H "Content-Type: application/json" -XPUT 'localhost:9200/shakespeare/_bulk' --data-binary @shakes_cut.json
+
+-- (Econtrar a que obra de Shakespeare pertenece la frase de "To be or not to be") --
+$ $ curl -H "Content-Type: application/json" -XGET 'localhost:9200/shakespeare/search?pretty' -d '{"query":{"match_phrase":{"text_entry": "To be or not to be"}}}'
+
+-- (Encontrar cuantas frases tiene el persona "Octavius Caesar" en la obra "Antony and Cleopatra") --
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/shakespeare/_count?pretty' -d '{
+        "query": {
+                "bool": {
+                        "filter": [{
+                                "match_phrase": {
+                                        "speaker": "OCTAVIUS CAESAR"
+                                }
+                        }],
+                        "must": [{
+                                "match_phrase": {
+                                        "play_name": "Antony and Cleopatra"
+                                }
+                        }]
+                }
+        }
+}'
+
+-- EJERCICIO 1 MODELO EXAMEN --
+
+-- (crear un indice usuarios con las siguientes caracteristicas) --
+Campo “nombre”, tipo text.
+Campo “apellido”, tipo text.
+Campo “edad”, tipo integer.
+
+$ curl -H "Content-Type: application/json" -XPUT 'localhost:9200/usuarios' -d '{"mappings":{"properties":{"nombre":{"type":"text"}, "apellido":{"type":"text"}, "edad":{"type":"integer"}}}}'
+
+-- (Añadir los elementos al indice) --
+(Se crea un archivo json)
+
+$ sudo vim users.json
+(Dentro del archivo):
+
+{"index":{"_id":"10"}}
+{"nombre":"Jon", "apellido":"Blanco", "edad": 27}
+{"index":{"_id":"11"}}
+{"nombre": "Amaia", "apellido": "Lopez", "edad": 28}
+{"index":{"_id":"12"}}
+{"nombre": "Hodei", "apellido": "Bilbao", "edad": 33}
+
+$ curl -H "Content-Type: application/json" -XPUT 'localhost:9200/usuarios/_bulk' -d 'curl -H "Content-Type: application/json" -XPUT 'localhost:9200/usuarios/_bulk' --data-binary @users.json
+
+-- (Devolver los usuarios que su apellido empiece por la letra 'B') --
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/usuarios/_search?pretty' -d '{"query":{"prefix":{"apellido":"b"}}}'
+
+-- (Recuperar los datos de "Amaia Lopez" pero buscando "Loepz") --
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/usuarios/_search?pretty' -d '{"query":{"fuzzy":{"apellido":{"value":"loepz"}}}}'
+
+-- LABORATORIO ELASTICSEARCH --
+
+-- (Crear indice y cragar los datos) --
+$ curl -H "Content-Type: application/json" -XPUT localhost:9200/bank 
+
+$ curl -H "Content-Type: application/json" -XPUT 'localhost:9200/bank/_bulk' --data:binary @accounts.json
+
+
+-- EJERCICIO 1  PAGINACION --
+-- (Recuperar los primeros 20 documentos del indice) --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d '{"from":0, "szie":20}'
+
+-- (Recuperar los segundos 20 documentos del indice) --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d '{"from":20, "size": 20}'
+
+-- (Personas que residen en Texas "TX" y devolver los primeros 15 resultados) --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d '{"from":0, "size": 15, "query": {"match":{"state": "tx"}}}'
+
+-- EJERCICIO 2 --
+
+-- (Residentes del State "LA", mostrar ordenados por edad en asc) --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d '{"sort":[{"age":"asc"}], "query": {"match":{"state":"tx"}}}'
+
+
+-- (Residentes del State "NJ", mostrar ordenados por el balance en asc) --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d '{"sort":[{"balance":"asc"}], "query": {"match":{"state":"nj"}}}'
+
+-- EJERCICIO 3 --
+
+-- (State "LA" sin city "Loretto" y age > 33) --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d 
+'{
+	"query":{
+		"bool":{
+			"filter":[{
+				"match":{"state":"LA"}
+			}],
+			"must":[{
+				"range":{"age": {"gt":33}}
+			}],
+			"must_not":[{
+				"match":{"city":"Loretto"}
+			}]
+		}
+	}
+}'
+
+-- (State "OH" y age > 39 años) --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d 
+'{
+	"query":{
+		"bool":{
+			"filter":[{
+				"match":{"state": "oh"}	
+			}],
+			"must":[{
+				"range":{"age":{"gt": 39}}
+			}]
+		}
+	}
+}'
+
+-- EJERCICIO 4 --
+
+-- (Busqueda difusa en Wyoming buscando "Woyming") --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d 
+'{
+	"query":{
+		"fuzzy":{
+			"city":{"value": "Woyming"}
+		}
+	}
+}'
+
+
+-- (Busqueda difusa en Wyoming buscando "Wyomin") --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d 
+'{
+	"query":{
+		"fuzzy":{
+			"city":{"value": "Wyomin"}
+		}
+	}
+}'
+
+
+-- EJERCICO 5 --
+
+-- (Apellidos que comiencen con "Mc") --
+
+$ curl -H "Content-Type: application/json" -XGET 'localhost:9200/bank/_search?pretty' -d 
+'{
+	"query":{
+		"prefix":{
+			"lastname":"mc"
+		}
+	}
+}'
+
+-- (direccion de residencia empiece por 6 y acabe con Court) --
+
+$ curl -XGET "127.0.0.1:9200/bank/_search?pretty" -H 'Content-Type: application/json' -d '{
+	"query": {
+		"wildcard": {
+			"address": {
+				"value": "6*court"
+			}
+		}
+	}
+}'
+
+- EJERCICIO 6 -
+
+- (Utilizando expresiones regulares, recuperar los datos de las personas cuyo balance este entre 40.000 y 40.999) // MAL --> DA UN ERROR QUE NO SE PUEDE HACER REGEX CON TYPE LONG QUE SOLO CON STRING
+
+$ curl -XGET "127.0.0.1:9200/bank/_search?pretty" -H 'Content-Type: application/json' -d '{
+	"query": {
+		"regexp": {
+			"balance": {
+				"value": "40([0-9]{3})"
+			}
+		}
+	}
+}'
+
+-- MODELO DE EXAMEN (LOGSTASH) --
+
+1. Abrimos el archivo pipeline/logstash.conf
+
+-- (Recibir datos en formato JSON a traves de conexiones en el puerto 9870) --
+
+(Dentro del archivo)
+
+input{
+	http{
+		port => '9870'
+	}
+}
+
+filter{
+	json{
+		source => "message"
+		target => "documento"
+	}
+}
+
+output{
+	stdout{}
+	elasticsearch{
+		hosts => [ "localhost:9200" ]
+		index => mis-logs
+	}
+}
+
+-- (Eliminar el campo ciudad de cada objeto JSON recibido) --
+
+input{
+	http{
+		port => '9870'
+	}
+}
+
+filter{
+	json{
+		source => "message"
+		target => "documentos"
+	}
+	
+	mutate{
+		remove_field => ["ciudad"]
+	}
+}
+
+output{
+	stdout{}
+	elasticsearch{
+		hosts => [ "localhost:9200" ]
+		index => mis-logs
+	}
+}
+
+-- (Escribir cada objeto JSON en el indice "usuarios" de elasticsearch) --
+
+input{
+	http{
+		port => '9870'
+	}
+		
+	mutate{
+		remove_field => ["ciudad"]
+	}
+}
+
+filter{
+	json{
+		source => "message"
+		target => "documento"
+	}
+}
+
+output{
+	stdout{}
+	elasticsearch{
+		hosts => [ "localhost:9200" ]
+		index => usuarios
+	}
+}
+
+
