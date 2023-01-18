@@ -12,4 +12,4 @@ services:
       - 9200:9200
       - 9300:9300
 volumes:
-  data01: null
+  data01: null 
