@@ -1,0 +1,7 @@
+mkdir /home/estefania/logstash
+cd /logstash/
+nano docker-compose.yaml
+mkdir pipeline
+cd /pipeline/
+nano logstash.conf
+
